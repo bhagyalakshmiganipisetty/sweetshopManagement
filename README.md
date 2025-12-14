@@ -79,3 +79,19 @@ vite v7.2.7 building client environment for production...
 - **Tool**: ChatGPT (OpenAI GPT-based Codex CLI)
 - **How**: leveraged to outline architecture, generate Django REST boilerplate, craft React components/hooks, create Flask metrics service, and draft documentation/testing scaffolds.
 - **Reflection**: Using AI accelerated scaffolding and cross-stack consistency so I could focus on enforcing business rules (purchase/restock validation, admin-only paths) and frontend UX polish. Tests and documentation were still authored with manual review to ensure correctness.
+
+### Deployment Reference
+1. **Prep env files** – copy `backend/.env.example` and `flask_service/.env.example`, replace secrets/URLs, and ensure both apps share the same PostgreSQL `DATABASE_URL`.
+2. **Railway: PostgreSQL** – create one managed Postgres instance and reuse its connection string everywhere.
+3. **Railway: Django API**
+   - Deploy from GitHub with the project root set to `backend/`.
+   - Variables: `DATABASE_URL`, `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS=<railway-domain>`, `DJANGO_CSRF_TRUSTED_ORIGINS=https://<vercel-domain>,https://<railway-domain>`, `CORS_ALLOWED_ORIGINS=https://<vercel-domain>`.
+   - Use a deploy command like `python manage.py migrate` and the provided Procfile (`web: gunicorn sweetshop_backend.wsgi`) or explicit start command `gunicorn sweetshop_backend.wsgi`.
+   - Run `python manage.py createsuperuser` once via Railway's “Run” tab and keep the public URL for the frontend (e.g., `https://sweetshop-api.up.railway.app`).
+4. **Railway: Flask metrics**
+   - Deploy another service with root `flask_service/`, set `DATABASE_URL` to the same Postgres string, and start it with `gunicorn app:app --bind 0.0.0.0:$PORT`.
+   - Confirm `https://<metrics-domain>/metrics/sweets` returns JSON.
+5. **Vercel frontend**
+   - Deploy the `frontend/` directory (`npm run build`, output `dist/`).
+   - Set `VITE_API_BASE_URL=https://<railway-django-domain>/api` and `VITE_METRICS_URL=https://<railway-flask-domain>/metrics/sweets`.
+   - Trigger a redeploy and test login/admin flows end-to-end.

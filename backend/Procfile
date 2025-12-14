@@ -1,0 +1,1 @@
+web: gunicorn sweetshop_backend.wsgi

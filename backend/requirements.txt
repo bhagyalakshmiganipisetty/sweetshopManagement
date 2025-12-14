@@ -8,3 +8,4 @@ drf-spectacular==0.29.0
 django-cors-headers==4.9.0
 pytest==9.0.2
 pytest-django==4.11.1
+gunicorn==23.0.0
